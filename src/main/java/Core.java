@@ -2,11 +2,12 @@ import java.util.*;
 
 public class Core {
 
-    public static Map<String, Integer> ngramFrequency = new HashMap<>();
+    public static Map<String, Integer> ngramCount = new HashMap<>();
 
     public static void main(String[] args) {
-        CorpusReader reader = new CorpusReader();
-        List<String> queries = reader.getQueries();
+        final CorpusReader reader = new CorpusReader();
+        final List<String> queries = reader.getQueries();
+        final Map<String,Integer> queriesCount = reader.getQueriesCount();
 
         for (String query : queries) {
             String[] words = query.split(" ");
@@ -16,7 +17,7 @@ public class Core {
                 // generate n-grams for each query
                 String ngramStr = generateEndNgrams(step, words);
                 // aggregate n-grams
-                updateFrequencyMap(ngramStr);
+                updateNgramsCountMap(ngramStr);
 
                 System.out.print("\"" + ngramStr + "\"");
                 System.out.print(step != words.length - 1 ? ", " : "]");
@@ -38,6 +39,8 @@ public class Core {
             }
             System.out.println("Looking to match word \"" + prefixEndTerm + "\"");
 
+            Set<String> syntheticSuggestionCandidates = new HashSet<>();
+
             Set<String> matchingCandidates = getMatchingCandidates(prefixEndTerm);
             for(String candidate : matchingCandidates) {
                 prefix = prefix.trim();
@@ -53,9 +56,21 @@ public class Core {
 
                 String syntheticQuery = (firstWords + " " + candidate).trim();
                 System.out.println("Resulting query: \"" + syntheticQuery + "\"");
+
+                syntheticSuggestionCandidates.add(syntheticQuery);
             }
 
-            //TODO: Merge with the historically popular queries
+            // Add the 10 most popular full-query candidates
+            int i = 0;
+            for (Map.Entry<String, Integer> entry : queriesCount.entrySet()) {
+                i++;
+                syntheticSuggestionCandidates.add(entry.getKey());
+
+                if (i == 10) {
+                    break;
+                }
+            }
+
             //TODO: Rank them using MPC (for now)
             System.out.println("===================================");
             prefix = scanner.nextLine();
@@ -65,14 +80,13 @@ public class Core {
     private static Set<String> getMatchingCandidates(String prefixEndTerm) {
         Set<String> candidates = new HashSet<>();
 
-        for (Map.Entry<String, Integer> entry : ngramFrequency.entrySet()) {
+        for (Map.Entry<String, Integer> entry : ngramCount.entrySet()) {
             String possibleMatch = entry.getKey();
 
             if (possibleMatch.startsWith(prefixEndTerm)) {
                 candidates.add(possibleMatch);
             }
         }
-
         return candidates;
     }
 
@@ -93,12 +107,12 @@ public class Core {
         return bobTheBuilder.toString();
     }
 
-    private static void updateFrequencyMap(String ngramStr) {
-        Integer count = ngramFrequency.get(ngramStr);
+    private static void updateNgramsCountMap(String ngramStr) {
+        Integer count = ngramCount.get(ngramStr);
         if (count == null) {
-            ngramFrequency.put(ngramStr, 1);
+            ngramCount.put(ngramStr, 1);
         } else {
-            ngramFrequency.put(ngramStr, ++count);
+            ngramCount.put(ngramStr, ++count);
         }
     }
 }
