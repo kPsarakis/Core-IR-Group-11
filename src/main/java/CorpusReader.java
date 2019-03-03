@@ -19,6 +19,7 @@ public class CorpusReader {
         queries.add("weather in america");
         queries.add("america");
         queries.add("bank of");
+        queries.add("ing bank");
         queries.add("of");
     }
 

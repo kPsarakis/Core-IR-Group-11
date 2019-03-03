@@ -1,60 +1,74 @@
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Core {
 
     public static Map<String, Integer> ngramFrequency = new HashMap<>();
 
     public static void main(String[] args) {
-
         CorpusReader reader = new CorpusReader();
         List<String> queries = reader.getQueries();
 
         for (String query : queries) {
             String[] words = query.split(" ");
 
+            System.out.print("Ngrams for \"" + query + "\" are: [");
             for (int step = 0; step < words.length; step++) {
+                // generate n-grams for each query
                 String ngramStr = generateEndNgrams(step, words);
+                // aggregate n-grams
                 updateFrequencyMap(ngramStr);
 
-                System.out.println(ngramStr);
-                System.out.println();
+                System.out.print("\"" + ngramStr + "\"");
+                System.out.print(step != words.length - 1 ? ", " : "]");
             }
+            System.out.println();
         }
 
-        // FIXME: might not need this here
-        Map<String, Integer> sortedMap = ngramFrequency.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
-
+        // Read user input
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter query prefix");
+        System.out.print("\nEnter query prefix: ");
         String prefix = scanner.nextLine();
 
         while(!prefix.equals("exit")) {
+            // Split the partial typed query and keep the last term
             String[] prefixTerms = prefix.split(" ");
             String prefixEndTerm = prefixTerms[prefixTerms.length - 1];
+            if (prefix.charAt(prefix.length()-1) == ' ') {
+                prefixEndTerm = prefixEndTerm + " ";  // Handle whitespace case
+            }
             System.out.println("Looking to match word \"" + prefixEndTerm + "\"");
 
-            List<String> matchingList = getMatchingList(prefixEndTerm);
+            Set<String> matchingCandidates = getMatchingCandidates(prefixEndTerm);
+            for(String candidate : matchingCandidates) {
+                prefix = prefix.trim();
+                String firstWords = prefix;
+                if (firstWords.contains(" ")) {
+                    firstWords = prefix.substring(0, prefix.lastIndexOf(" "));
+                } else {
+                    firstWords = "";
+                }
+                System.out.println("Typed query: \"" + prefix + "\"");
+                System.out.println("Synthetic query term 1: \"" + firstWords + "\"");
+                System.out.println("Synthetic query term 2: \"" + candidate + "\"");
 
-            //TODO: Generate the synthetic queries
+                String syntheticQuery = (firstWords + " " + candidate).trim();
+                System.out.println("Resulting query: \"" + syntheticQuery + "\"");
+            }
+
+            //TODO: Merge with the historically popular queries
             //TODO: Rank them using MPC (for now)
-
+            System.out.println("===================================");
             prefix = scanner.nextLine();
         }
     }
 
-    private static List<String> getMatchingList(String prefixEndTerm) {
-        List<String> candidates = new ArrayList<>();
+    private static Set<String> getMatchingCandidates(String prefixEndTerm) {
+        Set<String> candidates = new HashSet<>();
 
         for (Map.Entry<String, Integer> entry : ngramFrequency.entrySet()) {
             String possibleMatch = entry.getKey();
-            String[] possibleMatchTerms = possibleMatch.split(" ");
-            String possibleMatchStartTerm = possibleMatchTerms[0];
 
-            if (possibleMatchStartTerm.startsWith(prefixEndTerm)) {
+            if (possibleMatch.startsWith(prefixEndTerm)) {
                 candidates.add(possibleMatch);
             }
         }
