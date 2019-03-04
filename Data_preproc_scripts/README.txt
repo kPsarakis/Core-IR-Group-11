@@ -1,0 +1,3 @@
+Data_preproc.py: splitting data into the four partitions, replacing punctuation with whitespace, converting to lowercase and ignoring "-" queries.
+Data_preproc_test1.py: normal preproc plus filtering out identical id-query-timestap combinations.
+Data_preproc_test2.py: test1 plus removing identical id-query combinations 10 seconds apart to accomodate for the user clicking on a different search result page.
