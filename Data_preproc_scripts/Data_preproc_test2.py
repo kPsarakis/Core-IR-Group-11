@@ -69,17 +69,13 @@ for path in txt_files:
         # Convert query to lowercase
         query_final = query_nopunc.lower()
         if datetime(2006, 3, 1, 0, 0, 0) <= query_date <= datetime(2006, 4, 30, 23, 59, 59):
-            query_date = str(query_date)
-            background_file.write(query_final + '\t' + query_date + '\n')
+            background_file.write(query_final + '\n')
         elif datetime(2006, 5, 1, 0, 0, 0) <= query_date <= datetime(2006, 5, 14, 23, 59, 59):
-            query_date = str(query_date)
-            training_file.write(query_final + '\t' + query_date + '\n')
+            training_file.write(query_final + '\n')
         elif datetime(2006, 5, 15, 0, 0, 0) <= query_date <= datetime(2006, 5, 21, 23, 59, 59):
-            query_date = str(query_date)
-            validation_file.write(query_final + '\t' + query_date + '\n')
+            validation_file.write(query_final + '\n')
         elif datetime(2006, 5, 22, 0, 0, 0) <= query_date <= datetime(2006, 5, 28, 23, 59, 59):
-            query_date = str(query_date)
-            test_file.write(query_final + '\t' + query_date + '\n')
+            test_file.write(query_final + '\n')
         file.close()
 
 # Closing files
