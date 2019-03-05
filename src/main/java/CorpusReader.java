@@ -1,5 +1,10 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Reads the queries dataset(s)
@@ -7,14 +12,21 @@ import java.util.List;
 public class CorpusReader {
 
     private List<String> queries;
+    private final String FILEPATH = "src/main/java/data/validation-queries.txt";
 
     public CorpusReader() {
         queries = new ArrayList<>();
 
-        //TODO: Remove this once we read the actual data
-        queries.add("bank of america");
-        queries.add("national bank of china");
-        queries.add("weather in america");
+        try {
+            Stream<String> lines = Files.lines(Paths.get(FILEPATH));
+            queries = lines.collect(Collectors.toList());
+            lines.close();
+        } catch(IOException io) {
+            io.printStackTrace();
+        }
+//        queries.add("bank of america");
+//        queries.add("bank of china");
+//        queries.add("i love america");
     }
 
     public List<String> getQueries() {

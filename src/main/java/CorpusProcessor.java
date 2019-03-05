@@ -23,19 +23,23 @@ public class CorpusProcessor {
 	public void buildQueriesNgrams(List<String> queries) {
 		for (String query : queries) {
 			String[] words = query.split(" ");
-
-			System.out.print("Ngrams for \"" + query + "\" are: [");
+//			System.out.print("Ngrams for \"" + query + "\" are: [");
 			for (int step = 0; step < words.length; step++) {
 				// generate n-grams for each query
 				String ngramStr = generateEndNgrams(step, words);
 				// aggregate n-grams
 				updateNgramsCountMap(ngramStr);
 
-				System.out.print("\"" + ngramStr + "\"");
-				System.out.print(step != words.length - 1 ? ", " : "]");
+//				System.out.print("\"" + ngramStr + "\"");
+//				System.out.print(step != words.length - 1 ? ", " : "]");
 			}
-			System.out.println();
+//			System.out.println();
 		}
+
+		// sort to find the most popular n-grams
+		ngramCount = ngramCount.entrySet().stream()
+				.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 	}
 
 	private static String generateEndNgrams(int stepSize, String[] words) {
@@ -137,25 +141,21 @@ public class CorpusProcessor {
 
 	/**
 	 * Generates the full-query candidates for the given prefix.
-	 * The number of candidates to be returned is determined by the
-	 * {@code limit} parameter. Default is 10.
 	 *
 	 * @param prefix the prefix to match
-	 * @param limit limits the number of candidates to be returned
 	 * @return the generated full-query candidates
 	 */
-	public List<String> getFullQueryCandidates(String prefix, Integer limit) {
-		limit = (limit == null) ? 10 : limit;
+	public List<String> getFullQueryCandidates(String prefix) {
 		List<String> fullQueryCandidates = new ArrayList<>();
 
 		int i = 0;
 		for (Map.Entry<String, Integer> entry : queriesCount.entrySet()) {
-			if (entry.getKey().startsWith(prefix)) {
-				System.out.println("=> Full-query candidate: " + entry.getKey());
+			String key = entry.getKey();
+			if (key.startsWith(prefix)) {
+				System.out.println("=> Full-query candidate: " + key);
 				i++;
-				fullQueryCandidates.add(entry.getKey());
-				if (i == limit) {
-					break;
+				for (int j = 0; j < queriesCount.get(key); j++) {
+					fullQueryCandidates.add(key);
 				}
 			}
 		}

@@ -5,44 +5,51 @@ public class Core {
 
     public static void main(String[] args) {
 
-        final CorpusReader reader = new CorpusReader(); // Initialize the reader
-        final List<String> queries = reader.getQueries();
+        final CorpusReader reader = new CorpusReader();     // initialize the reader
+        final List<String> queries = reader.getQueries();   // get the read queries
 
         final CorpusProcessor processor = new CorpusProcessor(queries); // Initialize the processor
-	    processor.buildQueriesNgrams(queries);
-
-	    System.out.print("\nEnter query prefix: ");
+	    processor.buildQueriesNgrams(queries);  // build n-grams for each query
 
 	    // Read user input (Simulate partial query typing)
 	    Scanner scanner = new Scanner(System.in);
-        String prefix = scanner.nextLine();
+        String prefix = "";
+        Integer scenario = null;
 
         while(!prefix.equals("exit")) {
+	        System.out.print("\nEnter query prefix: ");
+	        prefix = scanner.nextLine();
+	        System.out.println("\nGenerate candidates for scenario (1, 2, 3): ");
+	        scenario = Integer.parseInt(scanner.nextLine());
+	        if (!scenario.equals(1) && !scenario.equals(2) && !scenario.equals(3)) {
+		        System.out.println("man mou dwse swsto scenario tin epomeni");
+		        return;
+	        }
 
-	        List<String> syntheticQueryCandidates = processor.getSyntheticQueryCandidates(prefix, 10000);
-	        List<String> fullQueryCandidates = processor.getFullQueryCandidates(prefix, 10);
+	        List<String> mergedCandidates = new ArrayList<>();
+	        mergedCandidates.addAll(processor.getFullQueryCandidates(prefix));  // full-query candidates are for all scenarios
 
-            List<String> mergedCandidates = new ArrayList<>();
-	        mergedCandidates.addAll(syntheticQueryCandidates);
-	        mergedCandidates.addAll(fullQueryCandidates);
+	        List<String> syntheticQueryCandidates;
 
-	        //TODO: in case i decide to return them as maps
-//	        Map<String, Integer> mergedCandidates = new HashMap<>(m1);
-//	        m2.forEach(
-//			        (key, value) -> map3.merge(key, value, (v1, v2) -> v1 + v2)
-//	        );
+	        if (scenario.equals(2)) {
+	        	// Full-query based candidates + Suffix based candidates (top 10k)
+		        syntheticQueryCandidates = processor.getSyntheticQueryCandidates(prefix, 10000);
+		        mergedCandidates.addAll(syntheticQueryCandidates);
+	        } else if (scenario.equals(3)){
+		        // Full-query based candidates + Suffix based candidates (top 100k)
+		        syntheticQueryCandidates = processor.getSyntheticQueryCandidates(prefix, 100000);
+		        mergedCandidates.addAll(syntheticQueryCandidates);
+	        }
 
-            List<String> mrrCandidates = getMrrRankingCandidates(mergedCandidates, 8);
-
-            //TODO: Rank them using MPC (for now)
-            System.out.println("===================================");
-            prefix = scanner.nextLine();
+	        //TODO: To be used by LAMBDA MART i guess
+            Map<String, Integer> aggregatedCandidates = aggregateCandidates(mergedCandidates);
+	        System.out.println("yolo");
         }
     }
 
-    private static List<String> getMrrRankingCandidates(List<String> syntheticSuggestionCandidates, int num) {
+    private static Map<String, Integer> aggregateCandidates(List<String> mergedCandidates) {
         Map<String, Integer> m = new HashMap<>();
-        for (String candidate : syntheticSuggestionCandidates) {
+        for (String candidate : mergedCandidates) {
             Integer c = m.get(candidate);
             if (c != null) {
                 m.put(candidate, ++c);
@@ -55,11 +62,6 @@ public class Core {
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
-        List<String> keys = m.entrySet().stream()
-            .map(Map.Entry::getKey)
-            .limit(num)
-            .collect(Collectors.toList());
-
-        return keys;
+        return m;
     }
 }
