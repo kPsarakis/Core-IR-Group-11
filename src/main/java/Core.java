@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Core {
 
@@ -39,9 +40,9 @@ public class Core {
             }
             System.out.println("Looking to match word \"" + prefixEndTerm + "\"");
 
-            Set<String> syntheticSuggestionCandidates = new HashSet<>();
+            List<String> syntheticSuggestionCandidates = new ArrayList<>();
 
-            Set<String> matchingCandidates = getMatchingCandidates(prefixEndTerm);
+            List<String> matchingCandidates = getMatchingCandidates(prefixEndTerm);
             for(String candidate : matchingCandidates) {
                 prefix = prefix.trim();
                 String firstWords = prefix;
@@ -63,13 +64,17 @@ public class Core {
             // Add the 10 most popular full-query candidates
             int i = 0;
             for (Map.Entry<String, Integer> entry : queriesCount.entrySet()) {
-                i++;
-                syntheticSuggestionCandidates.add(entry.getKey());
+                if (entry.getKey().startsWith(prefix)) {
+                    i++;
+                    syntheticSuggestionCandidates.add(entry.getKey());
 
-                if (i == 10) {
-                    break;
+                    if (i == 10) {
+                        break;
+                    }
                 }
             }
+
+            List<String> mrrCandidates = getMrrRankingCandidates(syntheticSuggestionCandidates, 8);
 
             //TODO: Rank them using MPC (for now)
             System.out.println("===================================");
@@ -77,8 +82,31 @@ public class Core {
         }
     }
 
-    private static Set<String> getMatchingCandidates(String prefixEndTerm) {
-        Set<String> candidates = new HashSet<>();
+    private static List<String> getMrrRankingCandidates(List<String> syntheticSuggestionCandidates, int num) {
+        Map<String, Integer> count = new HashMap<>();
+        for (String candidate : syntheticSuggestionCandidates) {
+            Integer c = count.get(candidate);
+            if (c != null) {
+                count.put(candidate, ++c);
+            } else {
+                count.put(candidate, 1);
+            }
+        }
+
+        count = count.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+        List<String> keys = count.entrySet().stream()
+            .map(Map.Entry::getKey)
+            .limit(num)
+            .collect(Collectors.toList());
+
+        return keys;
+    }
+
+    private static List<String> getMatchingCandidates(String prefixEndTerm) {
+        List<String> candidates = new ArrayList<>();
 
         for (Map.Entry<String, Integer> entry : ngramCount.entrySet()) {
             String possibleMatch = entry.getKey();
