@@ -12,7 +12,7 @@ public class TestFeatureMining {
         //fm.readFile("src/main/java/data/validation-queries.txt");
         fm.initHistoricLogs("src/main/java/data/validation-queries.txt");
         fm.readFile("src/main/java/data/dummy.txt");
-        fm.getFeatureVectors().get("bank of america").printNGrams();
+        fm.getFeatureVectors().get("bank of america").printFeatures();
 
     }
 

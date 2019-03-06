@@ -24,11 +24,50 @@ public class Features {
         nGrams[i] += frq;
     }
 
-    public void printNGrams(){
-            System.out.println("1: "+nGrams[0]+" 2: "+nGrams[1]+" 3: "+nGrams[2]+
+    public void setOtherFrequency(double frq){
+        freq = frq;
+    }
+
+    public void printFeatures(){
+        System.out.println("nGrams");
+        System.out.println("1: "+nGrams[0]+" 2: "+nGrams[1]+" 3: "+nGrams[2]+
                     " 4: "+nGrams[3]+" 5: "+nGrams[4]+" 6: "+nGrams[5]);
+        System.out.println("Frequency in historic logs: "+freq);
+        System.out.println("(Character) Prefix length: "+prefCLength);
+        System.out.println("(Character) Suffix length: "+suffCLength);
+        System.out.println("(Character) candidate length: "+fullCLength);
+        System.out.println("(Word) Prefix length: "+prefWLength);
+        System.out.println("(Word) Suffix length: "+suffWLength);
+        System.out.println("(Word) candidate length: "+fullWLength);
+        System.out.println("Ends with space: (1 => True 0 => False): "+space);
     }
 
 
+    public void setPrefCLength(int prefCLength) {
+        this.prefCLength = prefCLength;
+    }
 
+    public void setSuffCLength(int suffCLength) {
+        this.suffCLength = suffCLength;
+    }
+
+    public void setFullCLength(int fullCLength) {
+        this.fullCLength = fullCLength;
+    }
+
+    public void setPrefWLength(int prefWLength) {
+        this.prefWLength = prefWLength;
+    }
+
+    public void setSuffWLength(int suffWLength) {
+        this.suffWLength = suffWLength;
+    }
+
+    public void setFullWLength(int fullWLength) {
+        this.fullWLength = fullWLength;
+    }
+
+    public void setSpace(short space) {
+        this.space = space;
+    }
 }
