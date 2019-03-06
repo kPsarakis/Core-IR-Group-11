@@ -8,14 +8,15 @@ import java.util.Map;
 
 public class FeatureMining {
 
-    // Map containing the nGram probabilities
-    private Map<String, Double> nGramFreq;
+    private Map<String, Double> historicLogFreq;
+    private Map<String, Features> featureVectors;
 
     /**
      * Constructor
      */
     public FeatureMining() {
-        nGramFreq = new HashMap<>();
+        historicLogFreq = new HashMap<>();
+        featureVectors = new HashMap<>();
     }
 
     /**
@@ -27,58 +28,76 @@ public class FeatureMining {
 
             for (String line; (line = br.readLine()) != null; ) { // Lines
 
-                String[] lineVector = line.trim().split(" ");
+                Features fv = new Features(); // Init frequency vector
 
-                for (int i = 1; i <= Math.min(lineVector.length, 6); i++) { // clever 1 - 6 ngram size
+                String[] lineVector = line.trim().split(" "); // Line as a vector of words
 
-                    for (int j = 0; j <= lineVector.length - i; j++) {
+                for (int i = 1; i <= Math.min(lineVector.length, 6); i++) { // Clever 1 - 6 ngram size
+
+                    for (int j = 0; j <= lineVector.length - i; j++) { // For every word in the vector
 
                         StringBuilder nGram = new StringBuilder();
 
-                        for (int k = 0; k < i; k++) {
+                        for (int k = 0; k < i; k++)  // Create the ngram
                             nGram.append(lineVector[j + k]).append(" ");
-                        }
 
-                        incrementMap(nGram.toString().trim());
+                        if (historicLogFreq.containsKey(nGram.toString().trim())) // If it was previously observed
+                            fv.incrementNGram(i, historicLogFreq.get(nGram.toString().trim()));
+
                     }
 
                 }
 
+                featureVectors.put(line, fv);
             }
         }
 
-        normalizeMap();
-        printMap();
+    }
+
+    public void initHistoricLogs(String fname) throws IOException{
+
+        try (BufferedReader br = new BufferedReader(new FileReader(fname))) {
+
+            for (String line; (line = br.readLine()) != null; ) { // Lines
+                incrementMap(line.trim(),historicLogFreq);
+            }
+        }
+
+        normalizeMap(historicLogFreq);
 
     }
 
     /**
      * Function to increment entries of the map
      */
-    private void incrementMap(String key) {
-        if (nGramFreq.containsKey(key)) {
-            nGramFreq.put(key, nGramFreq.get(key) + 1.0);
-        } else {
-            nGramFreq.put(key, 1.0);
-        }
+    private void incrementMap(String key, Map<String, Double> mp) {
+        if (mp.containsKey(key))
+            mp.put(key, mp.get(key) + 1.0);
+        else
+            mp.put(key, 1.0);
     }
 
     /**
      * Normalize the Map so the frequencies resemble a pdf
      */
-    private void normalizeMap() {
-        for (Map.Entry entry : nGramFreq.entrySet())
-            nGramFreq.put((String) entry.getKey(), (double) entry.getValue() / nGramFreq.keySet().size());
+    private void normalizeMap(Map<String, Double> mp) {
+        for (Map.Entry entry : mp.entrySet())
+            mp.put((String) entry.getKey(), (double) entry.getValue() / mp.keySet().size());
     }
 
     /**
      * Function to print the map
      */
-    private void printMap() {
-        for (Map.Entry entry : nGramFreq.entrySet()) {
+    private void printMap(Map<String, Double> mp) {
+        for (Map.Entry entry : mp.entrySet())
             System.out.println("nGram: " + entry.getKey() + " | Frequency: " + entry.getValue());
-        }
     }
 
+    public Map<String, Double> getHistoricLogFreq() {
+        return historicLogFreq;
+    }
 
+    public Map<String, Features> getFeatureVectors() {
+        return featureVectors;
+    }
 }

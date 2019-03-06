@@ -8,9 +8,13 @@ public class TestFeatureMining {
 
         FeatureMining fm = new FeatureMining();
 
-        fm.readFile("src/main/java/data/dummy.txt");
+        //fm.readFile("src/main/java/data/dummy.txt");
         //fm.readFile("src/main/java/data/validation-queries.txt");
+        fm.initHistoricLogs("src/main/java/data/validation-queries.txt");
+        fm.readFile("src/main/java/data/dummy.txt");
+        fm.getFeatureVectors().get("bank of america").printNGrams();
 
     }
+
 
 }
