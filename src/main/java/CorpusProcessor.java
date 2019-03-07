@@ -5,12 +5,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class CorpusProcessor {
 
 	private Map<String, Integer> queriesCount = new HashMap<>();  // contains original-query to count mapping
-	private Map<String, Integer> ngramCount = new HashMap<>();    // contains n-gram to count mapping
+	private Map<String, Integer> ngramCount = new HashMap<>();    // contains all n-gram to count mapping
+	private Map<String, Integer> ngramCountTop10 = new HashMap<>();    // contains top 10K n-gram to count mapping
+	private Map<String, Integer> ngramCountTop100 = new HashMap<>();   // contains top 100K n-gram to count mapping
 
 	public CorpusProcessor(List<String> queries) {
 		queries.forEach(this::updateQueriesCountMap);
@@ -23,23 +26,21 @@ public class CorpusProcessor {
 	public void buildQueriesNgrams(List<String> queries) {
 		for (String query : queries) {
 			String[] words = query.split(" ");
-//			System.out.print("Ngrams for \"" + query + "\" are: [");
 			for (int step = 0; step < words.length; step++) {
-				// generate n-grams for each query
-				String ngramStr = generateEndNgrams(step, words);
-				// aggregate n-grams
-				updateNgramsCountMap(ngramStr);
-
-//				System.out.print("\"" + ngramStr + "\"");
-//				System.out.print(step != words.length - 1 ? ", " : "]");
+				String ngramStr = generateEndNgrams(step, words);   // generate n-grams for each query
+				updateNgramsCountMap(ngramStr); // aggregate n-grams
 			}
-//			System.out.println();
 		}
 
 		// sort to find the most popular n-grams
 		ngramCount = ngramCount.entrySet().stream()
 				.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+		ngramCountTop10 = ngramCount.entrySet().stream()
+				.limit(10000).collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
+		ngramCountTop100 = ngramCount.entrySet().stream()
+				.limit(100000).collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
 	}
 
 	private static String generateEndNgrams(int stepSize, String[] words) {
@@ -93,19 +94,11 @@ public class CorpusProcessor {
 
 		// Merge every synthetic candidate suffix with the query prefix (e.g bank o with of america)
 		for(String candidate : syntheticCandidateSuffixes) {
-			prefix = prefix.trim();
-			String firstWords = prefix;
-			if (firstWords.contains(" ")) {
-				firstWords = prefix.substring(0, prefix.lastIndexOf(" "));
-			} else {
-				firstWords = "";
-			}
-			System.out.println("Typed query: \"" + prefix + "\"");
-			System.out.println("Synthetic query term 1: \"" + firstWords + "\"");
-			System.out.println("Synthetic query term 2: \"" + candidate + "\"");
+//			System.out.println("Synthetic query term 1: \"" + prefix + "\"");
+//			System.out.println("Synthetic query term 2: \"" + candidate + "\"");
 
-			String syntheticQuery = (firstWords + " " + candidate).trim();
-			System.out.println("=> Resulting synthetic-query candidate: \"" + syntheticQuery + "\"");
+			String syntheticQuery = (prefix + "|" + candidate).trim();  // add | splitter to distinguish prefix term
+//			System.out.println("=> Resulting synthetic-query candidate: \"" + syntheticQuery + "\"");
 
 			syntheticSuggestionCandidates.add(syntheticQuery);
 		}
@@ -113,27 +106,21 @@ public class CorpusProcessor {
 	}
 
 	/**
-	 * Generates the full-query candidates for the given prefix.
-	 * The number of candidates to be returned is determined by the
-	 * {@code limit} parameter. Default is 10.
 	 *
 	 * @param prefixEndTerm
 	 * @param limit
 	 * @return
 	 */
 	private List<String> getSyntheticCandidateSuffixes(String prefixEndTerm, Integer limit) {
-		limit = (limit == null) ? 10000 : limit;
+		Map<String, Integer> ref = (limit == 10000) ? ngramCountTop10: ngramCountTop100;
+
 		List<String> candidates = new ArrayList<>();
 
-		int i = 0;
-		for (Map.Entry<String, Integer> entry : ngramCount.entrySet()) {
+		for (Map.Entry<String, Integer> entry : ref.entrySet()) {
 			String possibleMatch = entry.getKey();
 			if (possibleMatch.startsWith(prefixEndTerm)) {
-				i++;
-				candidates.add(possibleMatch);
-				if (i == limit) {
-					break;
-				}
+				String replaced = possibleMatch.replaceFirst(Pattern.quote(prefixEndTerm), "");
+				candidates.add(replaced);
 			}
 		}
 		return candidates;
@@ -152,10 +139,12 @@ public class CorpusProcessor {
 		for (Map.Entry<String, Integer> entry : queriesCount.entrySet()) {
 			String key = entry.getKey();
 			if (key.startsWith(prefix)) {
-				System.out.println("=> Full-query candidate: " + key);
+				String replaced = key.replaceFirst(Pattern.quote(prefix), "");
+				String fullQueryCandidate = prefix + "|" + replaced;
+//				System.out.println("=> Full-query candidate: " + fullQueryCandidate);
 				i++;
 				for (int j = 0; j < queriesCount.get(key); j++) {
-					fullQueryCandidates.add(key);
+					fullQueryCandidates.add(fullQueryCandidate);
 				}
 			}
 		}

@@ -1,4 +1,8 @@
 .idea/
 target/
 *.iml
+<<<<<<< HEAD
 src/main/java/data/results.txt
+=======
+src/main/java/data/
+>>>>>>> edeb9ad80c007a62dafc39bc5858a2c911d63fee
