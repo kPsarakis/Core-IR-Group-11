@@ -23,6 +23,13 @@ public class CorpusProcessor {
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 	}
 
+	/**
+	 * For each query of the background dataset, it calculates the
+	 * end-ngrams and aggregates them into the {@code ngramCount}
+	 * map.
+	 *
+	 * @param queries the queries of the background dataset
+	 */
 	public void buildQueriesNgrams(List<String> queries) {
 		for (String query : queries) {
 			String[] words = query.split(" ");
@@ -37,12 +44,21 @@ public class CorpusProcessor {
 				.sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 
+		// top 10K to be used by scenario 2
 		ngramCountTop10 = ngramCount.entrySet().stream()
 				.limit(10000).collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
+		// top 100K to be used by scenario 2
 		ngramCountTop100 = ngramCount.entrySet().stream()
 				.limit(100000).collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
 	}
 
+	/**
+	 * Generates the end n-gram for the given step size.
+	 *
+	 * @param stepSize the step size
+	 * @param words the words out of which the n-grams are generated
+	 * @return the generated ngram
+	 */
 	private static String generateEndNgrams(int stepSize, String[] words) {
 		Stack<String> ngrams = new Stack<>();
 
@@ -60,14 +76,31 @@ public class CorpusProcessor {
 		return bobTheBuilder.toString();
 	}
 
+	/**
+	 * Updates {@code queriesCount} map.
+	 *
+	 * @param query the key to be updated
+	 */
 	private void updateQueriesCountMap(String query) {
 		updateKeyCount(queriesCount, query);
 	}
 
+	/**
+	 * Updates {@code ngramCount} map.
+	 *
+	 * @param ngramStr the key to be updated
+	 */
 	private void updateNgramsCountMap(String ngramStr) {
 		updateKeyCount(ngramCount, ngramStr);
 	}
 
+	/**
+	 * Updates the corresponding map based on the {@code key} parameter.
+	 * If the key exists, the count is increased. Otherwise it is set to 1.
+	 *
+	 * @param map the map to be updated
+	 * @param key key the value of which is updated
+	 */
 	private void updateKeyCount(Map<String, Integer> map, String key) {
 		Integer count = map.get(key);
 		if (count == null) {
@@ -77,6 +110,16 @@ public class CorpusProcessor {
 		}
 	}
 
+	/**
+	 * Generates the synthetic query candidates for the given prefix.
+	 * The {@code limit} parameter specifies whether the candidates should
+	 * be generated using the 10K or the 100K ngram map.
+	 *
+	 * @param prefix the prefix to be matches
+	 * @param limit indicates which ngramCount to use
+	 * (either top10K or top100K)
+	 * @return a {@link List} with the synthetic candidates
+	 */
 	public List<String> getSyntheticQueryCandidates(String prefix, Integer limit) {
 		// Split the partial typed query and keep the last term
 		String[] prefixTerms = prefix.split(" ");
@@ -87,35 +130,31 @@ public class CorpusProcessor {
 			prefixEndTerm = prefixEndTerm + " ";
 		}
 
-		System.out.println("Looking to match word \"" + prefixEndTerm + "\"");
-
 		List<String> syntheticSuggestionCandidates = new ArrayList<>();
 		List<String> syntheticCandidateSuffixes = getSyntheticCandidateSuffixes(prefixEndTerm, limit);
 
-		// Merge every synthetic candidate suffix with the query prefix (e.g bank o with of america)
 		for(String candidate : syntheticCandidateSuffixes) {
-//			System.out.println("Synthetic query term 1: \"" + prefix + "\"");
-//			System.out.println("Synthetic query term 2: \"" + candidate + "\"");
-
-			String syntheticQuery = (prefix + "|" + candidate).trim();  // add | splitter to distinguish prefix term
-//			System.out.println("=> Resulting synthetic-query candidate: \"" + syntheticQuery + "\"");
-
+			// Merge every synthetic candidate suffix with the query prefix (e.g bank o with of america)
+			String syntheticQuery = (prefix + "|" + candidate).trim();  // add | delimiter to distinguish prefix term
 			syntheticSuggestionCandidates.add(syntheticQuery);
 		}
 		return syntheticSuggestionCandidates;
 	}
 
 	/**
+	 * Returns the matching synthetic suffixes for the given prefix.
+	 * The {@code limit} parameter specifies whether to use the 10K
+	 * or the 100K ngram map.
 	 *
-	 * @param prefixEndTerm
-	 * @param limit
-	 * @return
+	 * @param prefixEndTerm the prefix to be matched
+	 * @param limit ndicates which ngramCount to use
+	 * either top10K or top100K)
+	 * @return a {@link List} with the matching suffixes
 	 */
 	private List<String> getSyntheticCandidateSuffixes(String prefixEndTerm, Integer limit) {
 		Map<String, Integer> ref = (limit == 10000) ? ngramCountTop10: ngramCountTop100;
 
 		List<String> candidates = new ArrayList<>();
-
 		for (Map.Entry<String, Integer> entry : ref.entrySet()) {
 			String possibleMatch = entry.getKey();
 			if (possibleMatch.startsWith(prefixEndTerm)) {
@@ -129,7 +168,7 @@ public class CorpusProcessor {
 	/**
 	 * Generates the full-query candidates for the given prefix.
 	 *
-	 * @param prefix the prefix to match
+	 * @param prefix the prefix to be matched
 	 * @return the generated full-query candidates
 	 */
 	public List<String> getFullQueryCandidates(String prefix) {
@@ -141,10 +180,10 @@ public class CorpusProcessor {
 			if (key.startsWith(prefix)) {
 				String replaced = key.replaceFirst(Pattern.quote(prefix), "");
 				String fullQueryCandidate = prefix + "|" + replaced;
-//				System.out.println("=> Full-query candidate: " + fullQueryCandidate);
 				i++;
-				for (int j = 0; j < queriesCount.get(key); j++) {
-					fullQueryCandidates.add(fullQueryCandidate);
+				fullQueryCandidates.add(fullQueryCandidate);
+				if (i == 10) {
+					break;
 				}
 			}
 		}

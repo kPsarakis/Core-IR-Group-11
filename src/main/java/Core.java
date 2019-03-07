@@ -9,7 +9,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -63,51 +62,32 @@ public class Core {
 			    lines.close();
 
 			    for (String userInputQuery : userInputQueries) {
-			    	userInputQuery = "www ngoforum org tr";
-
 					String[] userInputQuerySplit = userInputQuery.split(" ", 2);
 					String firstWord = userInputQuerySplit[0]; // the first work as a whole
+				    String currentQuery = firstWord;
+
+				    List<String> mergedCandidates = getCandidatesForScenario(processor, scenario, currentQuery);
+				    Map<String, Integer> aggregatedCandidates = aggregateCandidates(mergedCandidates);
+				    writeCandidatesInFile(writer, userInputQuery, aggregatedCandidates);
 
 				    if (userInputQuerySplit.length > 1) {
 				        // not a single word case
-
 					    String restOfQuery = " " + userInputQuerySplit[1];
-					    String currentQuery = firstWord;
 
-					    for (int i = 0; i < restOfQuery.length(); i++){
-						    List<String> mergedCandidates = new ArrayList<>();
-						    mergedCandidates.addAll(processor.getFullQueryCandidates(currentQuery));  // full-query candidates are for all scenarios
-
-						    List<String> syntheticQueryCandidates;
-
-						    if (scenario == 2) {
-							    // Full-query based candidates + Suffix based candidates (top 10k)
-							    syntheticQueryCandidates = processor.getSyntheticQueryCandidates(currentQuery, 10000);
-							    mergedCandidates.addAll(syntheticQueryCandidates);
-						    } else if (scenario == 3){
-							    // Full-query based candidates + Suffix based candidates (top 100k)
-							    syntheticQueryCandidates = processor.getSyntheticQueryCandidates(currentQuery, 100000);
-							    mergedCandidates.addAll(syntheticQueryCandidates);
-						    }
-
-						    Map<String, Integer> aggregatedCandidates = aggregateCandidates(mergedCandidates);
-
-						    for (Map.Entry<String, Integer> candidate : aggregatedCandidates.entrySet()) {
-						        String candidateWithoutDelim = candidate.getKey().replace("|", "");
-						        Integer relevanceJudgement = (candidateWithoutDelim.equals(userInputQuery)) ? 1 : 0;
-
-							    String line = candidate.getKey() + "\t" + relevanceJudgement.toString() + "\n";
-							    writer.write(line);
-						    }
+					    for (int i = 0; i < restOfQuery.length(); i++) {
 						    char currentChar = restOfQuery.charAt(i);
 						    currentQuery = currentQuery + currentChar;
+
+						    mergedCandidates = getCandidatesForScenario(processor, scenario, currentQuery);
+						    aggregatedCandidates = aggregateCandidates(mergedCandidates);
+						    writeCandidatesInFile(writer, userInputQuery, aggregatedCandidates);
 					    }
-					    writer.close();
 				    }
 
 				    //TODO: REMOVE ME
-				    break;
+//				    break;
 			    }
+			    writer.close();
 
 		    } catch(IOException io) {
 			    io.printStackTrace();
@@ -115,34 +95,34 @@ public class Core {
         }
     }
 
-    private static void test(CorpusProcessor processor, String prefix) {
-    	Scanner scanner = new Scanner(System.in);
-    	Integer scenario = 2;
+	private static List<String> getCandidatesForScenario(CorpusProcessor processor, int scenario, String currentQuery) {
+		List<String> mergedCandidates = new ArrayList<>();
+		mergedCandidates.addAll(processor.getFullQueryCandidates(currentQuery));  // full-query candidates are for all scenarios
 
-	    while(!prefix.equals("exit")) {
-		    System.out.print("\nEnter query prefix: ");
-		    prefix = scanner.nextLine();
-		    System.out.println("\nGenerate candidates for scenario (1, 2, 3): ");
+		List<String> syntheticQueryCandidates;
 
-		    List<String> mergedCandidates = new ArrayList<>();
-		    mergedCandidates.addAll(processor.getFullQueryCandidates(prefix));  // full-query candidates are for all scenarios
+		if (scenario == 2) {
+			// Full-query based candidates + Suffix based candidates (top 10k)
+			syntheticQueryCandidates = processor.getSyntheticQueryCandidates(currentQuery, 10000);
+			mergedCandidates.addAll(syntheticQueryCandidates);
+		} else if (scenario == 3){
+			// Full-query based candidates + Suffix based candidates (top 100k)
+			syntheticQueryCandidates = processor.getSyntheticQueryCandidates(currentQuery, 100000);
+			mergedCandidates.addAll(syntheticQueryCandidates);
+		}
+		return mergedCandidates;
+	}
 
-		    List<String> syntheticQueryCandidates;
+	private static void writeCandidatesInFile(BufferedWriter writer, String userInputQuery,
+			Map<String, Integer> aggregatedCandidates) throws IOException {
+		for (Map.Entry<String, Integer> candidate : aggregatedCandidates.entrySet()) {
+		    String candidateWithoutDelim = candidate.getKey().replace("|", "");
+		    Integer relevanceJudgement = (candidateWithoutDelim.equals(userInputQuery)) ? 1 : 0;
 
-		    if (scenario.equals(2)) {
-			    // Full-query based candidates + Suffix based candidates (top 10k)
-			    syntheticQueryCandidates = processor.getSyntheticQueryCandidates(prefix, 10000);
-			    mergedCandidates.addAll(syntheticQueryCandidates);
-		    } else if (scenario.equals(3)){
-			    // Full-query based candidates + Suffix based candidates (top 100k)
-			    syntheticQueryCandidates = processor.getSyntheticQueryCandidates(prefix, 100000);
-			    mergedCandidates.addAll(syntheticQueryCandidates);
-		    }
-
-		    //TODO: To be used by LAMBDA MART i guess
-		    Map<String, Integer> aggregatedCandidates = aggregateCandidates(mergedCandidates);
-	    }
-    }
+			String line = candidate.getKey() + "\t" + relevanceJudgement.toString() + "\n";
+			writer.write(line);
+		}
+	}
 
     private static Map<String, Integer> aggregateCandidates(List<String> mergedCandidates) {
         Map<String, Integer> m = new HashMap<>();
