@@ -2,3 +2,8 @@
 target/
 *.iml
 src/main/java/data/
+LambdaMART/data_lambdaMART/qac.valid
+LambdaMART/data_lambdaMART/qac.valid.group
+LambdaMART/data_lambdaMART/lambdaMART.txt
+LambdaMART/data_lambdaMART/lambdaMART.txt
+LambdaMART/data_lambdaMART/lambdaMART.txt
