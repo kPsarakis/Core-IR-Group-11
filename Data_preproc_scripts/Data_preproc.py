@@ -1,6 +1,5 @@
 import string
 import glob
-# import sys
 from datetime import datetime
 
 # File containing the background data
@@ -36,13 +35,15 @@ for path in txt_files:
         if query == "-":
             continue
         query_date = values[2]
-        item_rank = values[3]
-        click_url = values[4]
         # Replacing punctuation characters with whispace
         query_nopunc = query.translate(str.maketrans(string.punctuation, ' '*len(string.punctuation)))
         # Convert query to lowercase
-        query_final = query_nopunc.lower()
-        # Skipping first line which contains the titles
+        query_lower = query_nopunc.lower()
+        # Removing multiple whitespaces from the final query
+        query_final = ' '.join(query_lower.split())
+        # Skip queries that were only containing punctuation characters
+        if query_final == '':
+            continue
         if first:
             # Skipping titles
             first = False

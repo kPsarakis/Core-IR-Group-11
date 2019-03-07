@@ -1,6 +1,5 @@
 import string
 import glob
-# import sys
 from datetime import datetime
 
 # File containing the background data
@@ -62,12 +61,19 @@ for path in txt_files:
         # Update unique combination list
         unique_searches[user_id + query] = query_date
         count += 1
-        item_rank = values[3]
-        click_url = values[4]
         # Replacing punctuation characters with whispace
         query_nopunc = query.translate(str.maketrans(string.punctuation, ' '*len(string.punctuation)))
         # Convert query to lowercase
-        query_final = query_nopunc.lower()
+        query_lower = query_nopunc.lower()
+        # Removing multiple whitespaces from the final query
+        query_final = ' '.join(query_lower.split())
+        # Skip queries that were only containing punctuation characters
+        if query_final == '':
+            continue
+        if first:
+            # Skipping titles
+            first = False
+            continue
         if datetime(2006, 3, 1, 0, 0, 0) <= query_date <= datetime(2006, 4, 30, 23, 59, 59):
             background_file.write(query_final + '\n')
         elif datetime(2006, 5, 1, 0, 0, 0) <= query_date <= datetime(2006, 5, 14, 23, 59, 59):
