@@ -1,8 +1,5 @@
 package features;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Features {
 
     private double[] nGrams;
@@ -10,6 +7,7 @@ public class Features {
     private int prefCLength, suffCLength, fullCLength;
     private int prefWLength, suffWLength, fullWLength;
     private short space;
+    private short relevanceJudgment;
 
     public Features(){
         nGrams = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -17,6 +15,12 @@ public class Features {
         prefCLength = 0; suffCLength = 0; fullCLength = 0;
         prefWLength = 0; suffWLength = 0; fullWLength = 0;
         space = 0;
+        relevanceJudgment = 0;
+    }
+
+
+    public void makeItRelevant(){
+        relevanceJudgment = 1;
     }
 
 
@@ -29,6 +33,8 @@ public class Features {
     }
 
     public void printFeatures(){
+
+        System.out.println("Relevance tag: " + relevanceJudgment);
         System.out.println("nGrams");
         System.out.println("1: "+nGrams[0]+" 2: "+nGrams[1]+" 3: "+nGrams[2]+
                     " 4: "+nGrams[3]+" 5: "+nGrams[4]+" 6: "+nGrams[5]);
@@ -40,7 +46,15 @@ public class Features {
         System.out.println("(Word) Suffix length: "+suffWLength);
         System.out.println("(Word) candidate length: "+fullWLength);
         System.out.println("Ends with space: (1 => True 0 => False): "+space);
+
     }
+
+    public String getLambdaFeatures(){
+        return "1:" + nGrams[0] + " 2:" + nGrams[1]+ " 3:" + nGrams[2] + " 4:" + nGrams[3] + " 5:" + nGrams[4]
+                + " 6:" + nGrams[5] + " 7:" + freq + " 8:" + prefCLength + " 9:" + suffCLength + " 10:" + fullCLength
+                + " 11:" + prefWLength + " 12:" + suffWLength + " 13:" + fullWLength + " 14:" + space;
+    }
+
 
 
     public void setPrefCLength(int prefCLength) {
@@ -70,4 +84,9 @@ public class Features {
     public void setSpace(short space) {
         this.space = space;
     }
+
+    public short getRelevanceJudgment() {
+        return relevanceJudgment;
+    }
+
 }

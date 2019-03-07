@@ -11,8 +11,9 @@ public class TestFeatureMining {
         //fm.readFile("src/main/java/data/dummy.txt");
         //fm.readFile("src/main/java/data/validation-queries.txt");
         fm.initHistoricLogs("src/main/java/data/validation-queries.txt");
-        fm.readFile("src/main/java/data/dummy.txt");
-        fm.getFeatureVectors().get("bank of america").printFeatures();
+        fm.readFile("src/main/java/data/results.txt");
+        //fm.getFeatureVectors().get("www myspace").printFeatures();
+        fm.writeFeatureVectors("src/main/java/data/lambdaMART.txt");
 
     }
 

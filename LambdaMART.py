@@ -1,16 +1,49 @@
 import xgboost as xgb
 from sklearn.datasets import load_svmlight_file
 
+def save_data(group_data,output_feature,output_group):
+    if len(group_data) == 0:
+        return
+
+    output_group.write(str(len(group_data))+"\n")
+    for data in group_data:
+        # only include nonzero features
+        feats = [ p for p in data[2:] if float(p.split(':')[1]) != 0.0 ]        
+        output_feature.write(data[0] + " " + " ".join(feats) + "\n")
+
 # LambdaMART with ndcg and 300 trees
-params = {'objective': 'rank:ndcg', 'n_estimators': 300}
+params = {'objective': 'rank:ndcg', 'n_estimators': 300 , 'eta': 0.1, 'gamma': 1.0,
+               'min_child_weight': 0.1, 'max_depth': 6}
 
-# Extra params
-'''
-'learning_rate': 0.1,
-          'gamma': 1.0, 'min_child_weight': 0.1,
-          'max_depth': 6,
-'''
 
+fi = open("src\main\java\data\\lambdaMART.txt", encoding="utf8")
+output_feature = open("src\main\java\data\qac.valid","w")
+output_group = open("src\main\java\data\qac.valid.group","w")
+
+
+group_data = []
+group = ""
+
+for line in fi:
+    if not line:
+        break
+    if "#" in line:
+        line = line[:line.index("#")]
+    splits = line.strip().split(" ")
+    if splits[1] != group:
+        save_data(group_data,output_feature,output_group)
+        group_data = []
+    group = splits[1]
+    group_data.append(splits)
+
+save_data(group_data,output_feature,output_group)
+
+fi.close()
+output_feature.close()
+output_group.close()
+
+
+'''
 # START example in datasets
 
 # TO-DO Find who to mod our dataset to fit this format
@@ -48,3 +81,4 @@ model.fit(x_train, y_train, group_train,
 
 # Get ranks
 pred = model.predict(x_test)
+'''

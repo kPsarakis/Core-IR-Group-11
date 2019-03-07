@@ -1,26 +1,22 @@
 package features;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 public class FeatureMining {
 
     private Map<String, Double> historicLogFreq;
-    private Map<String, Features> featureVectors;
+    private LinkedHashMap<String, Features> featureVectors;
 
     /**
      * Constructor
      */
     public FeatureMining() {
         historicLogFreq = new HashMap<>();
-        featureVectors = new HashMap<>();
+        featureVectors = new LinkedHashMap<>();
     }
-
     /**
-     * Reads file and creates 1-6 size nGrams
+     * Reads file and creates the feature vectors
      */
     public void readFile(String fname) throws IOException {
 
@@ -28,20 +24,31 @@ public class FeatureMining {
 
             for (String line; (line = br.readLine()) != null; ) { // Lines
 
-                String[] s = line.trim().split("\\|");
+                String[] s = line.split("\t");
 
-                String prefix = s[0];
-                String suffix = s[1];
-                String candidate = prefix+suffix;
+                String[] query = s[0].trim().split("\\|");
 
-                Features fv = new Features(); // Init frequency vector
 
-                setNGrams(candidate,fv);
-                setOtherFrequency(candidate,fv);
-                setLengthBasedFeatures(prefix,suffix,candidate,fv);
-                setSpaceFeature(prefix, fv);
+                if (query.length != 1) {
+                    //check for single word
 
-                featureVectors.put(candidate, fv);  //TODO: What is the key?
+                    String prefix = query[0];
+                    String suffix = query[1];
+                    String candidate = prefix + suffix;
+
+                    Features fv = new Features(); // Init frequency vector
+
+                    if (s[1].equals("1"))
+                        fv.makeItRelevant();
+
+                    setNGrams(candidate, fv);
+                    setOtherFrequency(candidate, fv);
+                    setLengthBasedFeatures(prefix, suffix, candidate, fv);
+                    setSpaceFeature(prefix, fv);
+
+                    featureVectors.put(prefix+"|"+candidate, fv);  //TODO: What is the key?
+
+                }
             }
         }
 
@@ -81,7 +88,7 @@ public class FeatureMining {
                     nGram.append(lineVector[j + k]).append(" ");
 
                 if (historicLogFreq.containsKey(nGram.toString().trim()))  // If it was previously observed
-                    f.incrementNGram(i, historicLogFreq.get(nGram.toString().trim()));
+                    f.incrementNGram(i-1, historicLogFreq.get(nGram.toString().trim()));
             }
 
         }
@@ -92,13 +99,30 @@ public class FeatureMining {
             f.setOtherFrequency(historicLogFreq.get(candidate));
     }
 
+    /**
+     * Write the feature vectors to disk ready for the lambdaMART step
+     */
+    public void writeFeatureVectors(String fname) throws FileNotFoundException {
+
+        try (PrintWriter out = new PrintWriter(fname)) {
+
+            for (Map.Entry <String,Features> entry : featureVectors.entrySet()) {
+
+                String[] s = entry.getKey().split("\\|");
+                Features fv = entry.getValue();
+                out.println(fv.getRelevanceJudgment()+" prefix:"+s[0].replace(" ","-")+" "+ fv.getLambdaFeatures()+ " #Candidate: "+s[1]);
+
+            }
+        }
+    }
+
     public void initHistoricLogs(String fname) throws IOException{
 
         try (BufferedReader br = new BufferedReader(new FileReader(fname))) {
 
-            for (String line; (line = br.readLine()) != null; ) { // Lines
+            for (String line; (line = br.readLine()) != null; ) // Lines
                 incrementMap(line.trim(),historicLogFreq);
-            }
+
         }
 
         normalizeMap(historicLogFreq);
@@ -123,19 +147,4 @@ public class FeatureMining {
             mp.put((String) entry.getKey(), (double) entry.getValue() / mp.keySet().size());
     }
 
-    /**
-     * Function to print the map
-     */
-    private void printMap(Map<String, Double> mp) {
-        for (Map.Entry entry : mp.entrySet())
-            System.out.println("nGram: " + entry.getKey() + " | Frequency: " + entry.getValue());
-    }
-
-    public Map<String, Double> getHistoricLogFreq() {
-        return historicLogFreq;
-    }
-
-    public Map<String, Features> getFeatureVectors() {
-        return featureVectors;
-    }
 }
