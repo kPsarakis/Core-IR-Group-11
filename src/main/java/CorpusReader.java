@@ -24,9 +24,6 @@ public class CorpusReader {
         } catch(IOException io) {
             io.printStackTrace();
         }
-//        queries.add("bank o f america");
-//        queries.add("bank of china");
-//        queries.add("i love america");
     }
 
     public List<String> getQueries() {
