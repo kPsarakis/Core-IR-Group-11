@@ -4,18 +4,15 @@ import java.io.IOException;
 
 public class TestFeatureMining {
 
+    /**
+     * Demo that shows how we do the feature mining and output them ready for the LambdaMART step
+     *
+     * @throws IOException
+     */
     public static void main(String[] args) throws IOException {
-
-        FeatureMining fm = new FeatureMining();
-
-        //fm.readFile("src/main/java/data/dummy.txt");
-        //fm.readFile("src/main/java/data/validation-queries.txt");
-        fm.initHistoricLogs("src/main/java/data/validation-queries.txt");
-        fm.readFile("src/main/java/data/results.txt");
-        //fm.getFeatureVectors().get("www myspace").printFeatures();
-        fm.writeFeatureVectors("src/main/java/data/lambdaMART.txt");
-
+        FeatureMining fm = new FeatureMining("src/main/java/data/history.txt"); // initiate the feature mining class with the location of the historic logs
+        fm.readFile("src/main/java/data/train.txt"); // read the file that we want to mine the features from
+        fm.writeFeatureVectors("LambdaMART/data_lambdaMART/train.txt"); // output the features to an svmlight file readay for the LambdaMART step
     }
-
 
 }

@@ -2,6 +2,9 @@ package features;
 
 public class Features {
 
+    /**
+     *  All the features
+     */
     private double[] nGrams;
     private double freq;
     private int prefCLength, suffCLength, fullCLength;
@@ -9,6 +12,9 @@ public class Features {
     private short space;
     private short relevanceJudgment;
 
+    /**
+     * Constructor that initializes all features to zero
+     */
     public Features(){
         nGrams = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         freq = 0.0;
@@ -18,45 +24,46 @@ public class Features {
         relevanceJudgment = 0;
     }
 
-
+    /**
+     * Function that sets the query candidate as relevant
+     */
     public void makeItRelevant(){
         relevanceJudgment = 1;
     }
 
-
+    /**
+     * Function that does the sum of ngramfreq_i = sum(freq(g))
+     *
+     * @param i the i-gram's frequency that gets increased
+     * @param frq the amount that gets increased
+     */
     public void incrementNGram(int i, double frq){
         nGrams[i] += frq;
     }
 
+    /**
+     * Function that sets the frequency of the query in historical logs
+     *
+     * @param frq the amount to set the frequency
+     */
     public void setOtherFrequency(double frq){
         freq = frq;
     }
 
-    public void printFeatures(){
-
-        System.out.println("Relevance tag: " + relevanceJudgment);
-        System.out.println("nGrams");
-        System.out.println("1: "+nGrams[0]+" 2: "+nGrams[1]+" 3: "+nGrams[2]+
-                    " 4: "+nGrams[3]+" 5: "+nGrams[4]+" 6: "+nGrams[5]);
-        System.out.println("Frequency in historic logs: "+freq);
-        System.out.println("(Character) Prefix length: "+prefCLength);
-        System.out.println("(Character) Suffix length: "+suffCLength);
-        System.out.println("(Character) candidate length: "+fullCLength);
-        System.out.println("(Word) Prefix length: "+prefWLength);
-        System.out.println("(Word) Suffix length: "+suffWLength);
-        System.out.println("(Word) candidate length: "+fullWLength);
-        System.out.println("Ends with space: (1 => True 0 => False): "+space);
-
-    }
-
+    /**
+     * Function that returns the LambdaMART features
+     *
+     * @return the features as string in svmlight format
+     */
     public String getLambdaFeatures(){
         return "1:" + nGrams[0] + " 2:" + nGrams[1]+ " 3:" + nGrams[2] + " 4:" + nGrams[3] + " 5:" + nGrams[4]
                 + " 6:" + nGrams[5] + " 7:" + freq + " 8:" + prefCLength + " 9:" + suffCLength + " 10:" + fullCLength
                 + " 11:" + prefWLength + " 12:" + suffWLength + " 13:" + fullWLength + " 14:" + space;
     }
 
-
-
+    /**
+     * Generic getters and setters
+     */
     public void setPrefCLength(int prefCLength) {
         this.prefCLength = prefCLength;
     }

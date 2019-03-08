@@ -3,3 +3,6 @@ target/
 *.iml
 src/main/java/data/
 LambdaMART/data_lambdaMART/
+LambdaMART/__pycache__/calc_MRR.cpython-37.pyc
+LambdaMART/__pycache__/data_preparation.cpython-37.pyc
+LambdaMART/__pycache__/data_preparation.cpython-37.pyc
