@@ -50,6 +50,8 @@ public class CorpusProcessor {
 		// top 100K to be used by scenario 2
 		ngramCountTop100 = ngramCount.entrySet().stream()
 				.limit(100000).collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
+
+		ngramCount = null;
 	}
 
 	/**
@@ -112,15 +114,15 @@ public class CorpusProcessor {
 
 	/**
 	 * Generates the synthetic query candidates for the given prefix.
-	 * The {@code limit} parameter specifies whether the candidates should
+	 * The {@code mapLimit} parameter specifies whether the candidates should
 	 * be generated using the 10K or the 100K ngram map.
 	 *
 	 * @param prefix the prefix to be matches
-	 * @param limit indicates which ngramCount to use
+	 * @param mapLimit indicates which ngramCount to use
 	 * (either top10K or top100K)
 	 * @return a {@link List} with the synthetic candidates
 	 */
-	public List<String> getSyntheticQueryCandidates(String prefix, Integer limit) {
+	public List<String> getSyntheticQueryCandidates(String prefix, Integer mapLimit, Integer limit) {
 		// Split the partial typed query and keep the last term
 		String[] prefixTerms = prefix.split(" ");
 		String prefixEndTerm = prefixTerms[prefixTerms.length - 1];
@@ -131,7 +133,7 @@ public class CorpusProcessor {
 		}
 
 		List<String> syntheticSuggestionCandidates = new ArrayList<>();
-		List<String> syntheticCandidateSuffixes = getSyntheticCandidateSuffixes(prefixEndTerm, limit);
+		List<String> syntheticCandidateSuffixes = getSyntheticCandidateSuffixes(prefixEndTerm, mapLimit, limit);
 
 		for(String candidate : syntheticCandidateSuffixes) {
 			// Merge every synthetic candidate suffix with the query prefix (e.g bank o with of america)
@@ -143,23 +145,28 @@ public class CorpusProcessor {
 
 	/**
 	 * Returns the matching synthetic suffixes for the given prefix.
-	 * The {@code limit} parameter specifies whether to use the 10K
+	 * The {@code mapLimit} parameter specifies whether to use the 10K
 	 * or the 100K ngram map.
 	 *
 	 * @param prefixEndTerm the prefix to be matched
-	 * @param limit ndicates which ngramCount to use
+	 * @param mapLimit ndicates which ngramCount to use
 	 * either top10K or top100K)
 	 * @return a {@link List} with the matching suffixes
 	 */
-	private List<String> getSyntheticCandidateSuffixes(String prefixEndTerm, Integer limit) {
-		Map<String, Integer> ref = (limit == 10000) ? ngramCountTop10: ngramCountTop100;
+	private List<String> getSyntheticCandidateSuffixes(String prefixEndTerm, Integer mapLimit, Integer limit) {
+		Map<String, Integer> ref = (mapLimit == 10000) ? ngramCountTop10: ngramCountTop100;
 
 		List<String> candidates = new ArrayList<>();
+		int i = 0;
 		for (Map.Entry<String, Integer> entry : ref.entrySet()) {
 			String possibleMatch = entry.getKey();
 			if (possibleMatch.startsWith(prefixEndTerm)) {
+				i++;
 				String replaced = possibleMatch.replaceFirst(Pattern.quote(prefixEndTerm), "");
 				candidates.add(replaced);
+				if (i == limit) {
+					break;
+				}
 			}
 		}
 		return candidates;
