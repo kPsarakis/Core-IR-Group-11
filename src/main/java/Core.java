@@ -103,11 +103,11 @@ public class Core {
 
 		if (scenario == 2) {
 			// Full-query based candidates + Suffix based candidates (top 10k)
-			syntheticQueryCandidates = processor.getSyntheticQueryCandidates(currentQuery, 10000);
+			syntheticQueryCandidates = processor.getSyntheticQueryCandidates(currentQuery, 10000, 10);
 			mergedCandidates.addAll(syntheticQueryCandidates);
 		} else if (scenario == 3){
 			// Full-query based candidates + Suffix based candidates (top 100k)
-			syntheticQueryCandidates = processor.getSyntheticQueryCandidates(currentQuery, 100000);
+			syntheticQueryCandidates = processor.getSyntheticQueryCandidates(currentQuery, 100000, 100);
 			mergedCandidates.addAll(syntheticQueryCandidates);
 		}
 		return mergedCandidates;
@@ -115,6 +115,7 @@ public class Core {
 
 	private static void writeCandidatesInFile(BufferedWriter writer, String userInputQuery,
 			Map<String, Integer> aggregatedCandidates) throws IOException {
+
 		for (Map.Entry<String, Integer> candidate : aggregatedCandidates.entrySet()) {
 		    String candidateWithoutDelim = candidate.getKey().replace("|", "");
 		    Integer relevanceJudgement = (candidateWithoutDelim.equals(userInputQuery)) ? 1 : 0;
