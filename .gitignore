@@ -6,4 +6,9 @@ LambdaMART/data_lambdaMART/
 LambdaMART/__pycache__/calc_MRR.cpython-37.pyc
 LambdaMART/__pycache__/data_preparation.cpython-37.pyc
 LambdaMART/__pycache__/data_preparation.cpython-37.pyc
+<<<<<<< HEAD
 LambdaMART/__pycache__/data_preparation.cpython-37.pyc
+=======
+Data-Scenario*
+201903082102-results_test-queries.txt
+>>>>>>> 47b86ae7d770b30ea8a902ec6270dfd816caf9c3

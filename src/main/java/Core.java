@@ -61,12 +61,21 @@ public class Core {
 			    userInputQueries = lines.collect(Collectors.toList());
 			    lines.close();
 
+			    int processedCount = 0;
+			    double meanRR = 0;
+
 			    for (String userInputQuery : userInputQueries) {
+				    processedCount ++;
+
 					String[] userInputQuerySplit = userInputQuery.split(" ", 2);
 					String firstWord = userInputQuerySplit[0]; // the first work as a whole
 				    String currentQuery = firstWord;
 
 				    List<String> mergedCandidates = getCandidatesForScenario(processor, scenario, currentQuery);
+
+					double rr = calculateReciprocalRank(userInputQuery, mergedCandidates);
+					meanRR += rr;
+
 				    Map<String, Integer> aggregatedCandidates = aggregateCandidates(mergedCandidates);
 				    writeCandidatesInFile(writer, userInputQuery, aggregatedCandidates);
 
@@ -75,10 +84,15 @@ public class Core {
 					    String restOfQuery = " " + userInputQuerySplit[1];
 
 					    for (int i = 0; i < restOfQuery.length(); i++) {
+						    processedCount ++;
+
 						    char currentChar = restOfQuery.charAt(i);
 						    currentQuery = currentQuery + currentChar;
 
 						    mergedCandidates = getCandidatesForScenario(processor, scenario, currentQuery);
+						    rr = calculateReciprocalRank(userInputQuery, mergedCandidates);
+						    meanRR += rr;
+
 						    aggregatedCandidates = aggregateCandidates(mergedCandidates);
 						    writeCandidatesInFile(writer, userInputQuery, aggregatedCandidates);
 					    }
@@ -87,13 +101,26 @@ public class Core {
 				    //TODO: REMOVE ME
 //				    break;
 			    }
-			    writer.close();
+			    meanRR = meanRR / processedCount;
+			    System.out.println("Mean Reciprocal Rank = " + meanRR);
 
 		    } catch(IOException io) {
 			    io.printStackTrace();
 		    }
         }
     }
+
+	private static double calculateReciprocalRank(String userInputQuery, List<String> mergedCandidates) {
+    	double rr = 0;
+    	for (int i = 0; i < mergedCandidates.size(); i++) {
+		    String candidate = mergedCandidates.get(i).replace("|", "");
+		    if (userInputQuery.equals(candidate)) {
+    			rr = 1.0/ (i + 1);
+		    }
+	    }
+
+	    return rr;
+	}
 
 	private static List<String> getCandidatesForScenario(CorpusProcessor processor, int scenario, String currentQuery) {
 		List<String> mergedCandidates = new ArrayList<>();

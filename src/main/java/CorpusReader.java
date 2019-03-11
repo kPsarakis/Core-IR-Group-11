@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 public class CorpusReader {
 
     private List<String> queries;
-    private final String FILEPATH = "src/main/java/data/training-queries.txt";
+    private final String FILEPATH = "src/main/java/data/background-queries.txt";
 
     public CorpusReader() {
         queries = new ArrayList<>();
@@ -24,9 +24,6 @@ public class CorpusReader {
         } catch(IOException io) {
             io.printStackTrace();
         }
-//        queries.add("bank o f america");
-//        queries.add("bank of china");
-//        queries.add("i love america");
     }
 
     public List<String> getQueries() {
