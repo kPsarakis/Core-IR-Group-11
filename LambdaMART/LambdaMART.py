@@ -6,7 +6,7 @@ from data_preparation import trans_data
 from calc_MRR import calc_MRR
 
 # LambdaMART with ndcg and 300 trees
-params = {'objective': 'rank:ndcg', 'n_estimators': 300 , 'eta': 0.1, 'gamma': 1.0,
+params = {'objective': 'rank:pairwise', 'n_estimators': 300 , 'eta': 0.1, 'gamma': 1.0,
                'min_child_weight': 0.1, 'max_depth': 6}
 
 trans_data("data_lambdaMART\\vali.txt", 

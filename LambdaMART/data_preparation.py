@@ -5,8 +5,8 @@ def save_data(group_data,output_feature,output_group):
     output_group.write(str(len(group_data))+"\n")
     for data in group_data:
         # only include nonzero features
-        feats = [ p for p in data[8:] if float(p.split(':')[1]) != 0.0 ]   # other features
-        #feats = [ p for p in data[2:] if float(p.split(':')[1]) != 0.0 ]   # other + ngrams    
+        feats = [ p for p in data[8:] if float(p.split(':')[1]) != 0.0 ]     #  only other 
+        # = [ p for p in data[2:] if float(p.split(':')[1]) != 0.0 ]     # n-grams and other   
         output_feature.write(data[0] + " " + " ".join(feats) + "\n")
 
 def trans_data(in_file, out_feature, out_group):
