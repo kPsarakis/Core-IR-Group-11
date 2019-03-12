@@ -17,7 +17,7 @@ public class HistoricQueryLogs {
      *
      * @param fname the file name of the historic logs
      */
-    public HistoricQueryLogs(String fname){
+    public HistoricQueryLogs(String fname) {
         historicLogFreq = new HashMap<>();
         logFileName = fname;
     }
@@ -27,7 +27,7 @@ public class HistoricQueryLogs {
      *
      * @return the historic log HashMap
      */
-    public Map<String, Double> getHistoricLogs()  {
+    public Map<String, Double> getHistoricLogs() {
 
         try (BufferedReader br = new BufferedReader(new FileReader(logFileName))) {
             for (String line; (line = br.readLine()) != null; )

@@ -54,7 +54,7 @@ public class FeatureMining {
                     setLengthBasedFeatures(prefix, suffix, candidate, fv); // set the length based features (Other features)
                     setSpaceFeature(prefix, fv); // set the whitespace feature (Other features)
 
-                    featureVectors.put(prefix+"|"+candidate, fv); // put the new feature vector in the LinkedHashMap with a unique hey
+                    featureVectors.put(prefix + "|" + candidate, fv); // put the new feature vector in the LinkedHashMap with a unique hey
 
                 }
             }
@@ -66,9 +66,9 @@ public class FeatureMining {
      * Function that generates the N-gram based features as specified in the 3.2 section
      *
      * @param candidate the suggested candidate that we generate the n-grams from
-     * @param f the feature vector that will be modified
+     * @param f         the feature vector that will be modified
      */
-    private void setNGrams(String candidate, Features f){
+    private void setNGrams(String candidate, Features f) {
 
         String[] lineVector = candidate.trim().split(" "); // Line as a vector of words
 
@@ -86,7 +86,7 @@ public class FeatureMining {
 
                 if (historicLogFreq.containsKey(nGram.toString().trim()))
                     // If it was previously observed
-                    f.incrementNGram(i-1, historicLogFreq.get(nGram.toString().trim())); // increase its n-gram freq
+                    f.incrementNGram(i - 1, historicLogFreq.get(nGram.toString().trim())); // increase its n-gram freq
 
             }
         }
@@ -96,10 +96,10 @@ public class FeatureMining {
      * Function that creates the frequency of the query in historical logs feature (Other features)
      *
      * @param candidate the query candidate
-     * @param f the feature vector that will be modified
+     * @param f         the feature vector that will be modified
      */
-    private void setOtherFrequency(String candidate, Features f){
-        if(historicLogFreq.containsKey(candidate))
+    private void setOtherFrequency(String candidate, Features f) {
+        if (historicLogFreq.containsKey(candidate))
             // Other features frequency of the candidate query in the historical logs
             f.setOtherFrequency(historicLogFreq.get(candidate));
     }
@@ -107,12 +107,12 @@ public class FeatureMining {
     /**
      * Function that creates the length based features (Other features)
      *
-     * @param prefix the query prefix
-     * @param suffix the query suffix
+     * @param prefix    the query prefix
+     * @param suffix    the query suffix
      * @param candidate the query candidate
-     * @param f the feature vector that will be modified
+     * @param f         the feature vector that will be modified
      */
-    private void setLengthBasedFeatures(String prefix, String suffix, String candidate, Features f){
+    private void setLengthBasedFeatures(String prefix, String suffix, String candidate, Features f) {
 
         f.setPrefCLength(prefix.length()); // set prefix character length
         f.setFullCLength(candidate.length()); // set full suggestion character length
@@ -128,14 +128,14 @@ public class FeatureMining {
      * If the prefix ends with whitespace set the feature to 1 else to 0
      *
      * @param prefix the query prefix
-     * @param f the feature vector that will be modified
+     * @param f      the feature vector that will be modified
      */
-    private void setSpaceFeature(String prefix, Features f){
-        if(prefix.charAt(prefix.length()-1) == ' ')
+    private void setSpaceFeature(String prefix, Features f) {
+        if (prefix.charAt(prefix.length() - 1) == ' ')
             // If the last character is the whitespace character
-            f.setSpace((short)1);
+            f.setSpace((short) 1);
         else
-            f.setSpace((short)0);
+            f.setSpace((short) 0);
     }
 
     /**
@@ -144,15 +144,15 @@ public class FeatureMining {
     public void writeFeatureVectors(String fname) throws FileNotFoundException {
 
         try (PrintWriter out = new PrintWriter(fname)) {
-            for (Map.Entry <String,Features> entry : featureVectors.entrySet()) {
+            for (Map.Entry<String, Features> entry : featureVectors.entrySet()) {
                 // for every entry in the feature map write the feature vector in a separate line on disk
 
                 String[] s = entry.getKey().split("\\|"); // The full query candidate splits in prefix and suffix
 
                 Features fv = entry.getValue(); // The feature vector
 
-                out.println(fv.getRelevanceJudgment()+" prefix:"+s[0].replace(" ","-")+
-                        " "+ fv.getLambdaFeatures()+ " #Candidate: "+s[1]); // write the feature vectors in a svmlight string format
+                out.println(fv.getRelevanceJudgment() + " prefix:" + s[0].replace(" ", "-") +
+                        " " + fv.getLambdaFeatures() + " #Candidate: " + s[1]); // write the feature vectors in a svmlight string format
 
             }
         }
