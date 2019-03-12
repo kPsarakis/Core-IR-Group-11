@@ -8,6 +8,10 @@ import java.util.Stack;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Responsible for generating ngram-suffixes and
+ * full-query/synthetic candidates for a given query
+ */
 public class CorpusProcessor {
 
 	private Map<String, Integer> queriesCount = new HashMap<>();  // contains original-query to count mapping

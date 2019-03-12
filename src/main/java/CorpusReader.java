@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Reads the queries dataset(s)
+ * Reads the background queries dataset
  */
 public class CorpusReader {
 

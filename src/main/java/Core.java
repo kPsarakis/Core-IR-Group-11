@@ -1,5 +1,4 @@
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,7 +18,7 @@ import java.util.stream.Stream;
 
 public class Core {
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) {
 
         final CorpusReader reader = new CorpusReader();     // initialize the reader
         final List<String> queries = reader.getQueries();   // get the read queries
@@ -64,12 +63,12 @@ public class Core {
 			    int processedCount = 0;
 			    double meanRR = 0;
 
+			    // iterate over the queries of the read file
 			    for (String userInputQuery : userInputQueries) {
 				    processedCount ++;
 
 					String[] userInputQuerySplit = userInputQuery.split(" ", 2);
-					String firstWord = userInputQuerySplit[0]; // the first work as a whole
-				    String currentQuery = firstWord;
+				    String currentQuery = userInputQuerySplit[0]; // the first work as a whole
 
 				    List<String> mergedCandidates = getCandidatesForScenario(processor, scenario, currentQuery);
 
@@ -97,9 +96,6 @@ public class Core {
 						    writeCandidatesInFile(writer, userInputQuery, aggregatedCandidates);
 					    }
 				    }
-
-				    //TODO: REMOVE ME
-//				    break;
 			    }
 			    meanRR = meanRR / processedCount;
 			    System.out.println("Mean Reciprocal Rank = " + meanRR);
@@ -110,57 +106,68 @@ public class Core {
         }
     }
 
-	private static double calculateReciprocalRank(String userInputQuery, List<String> mergedCandidates) {
-    	double rr = 0;
-    	for (int i = 0; i < mergedCandidates.size(); i++) {
-		    String candidate = mergedCandidates.get(i).replace("|", "");
-		    if (userInputQuery.equals(candidate)) {
-    			rr = 1.0/ (i + 1);
+	/**
+	 * Calculates the reciprocal rank of the given {@code query}
+	 * based on the {@code candidates} list.
+	 *
+	 * @param query the query for which the reciprocal rank is calculated
+	 * @param candidates the candidates list
+	 * @return the calculated reciprocal rank
+	 */
+	private static double calculateReciprocalRank(String query, List<String> candidates) {
+    	double reciprocalRank = 0;
+    	for (int i = 0; i < candidates.size(); i++) {
+		    String candidate = candidates.get(i).replace("|", "");
+		    if (query.equals(candidate)) {
+    			reciprocalRank = 1.0/ (i + 1);
 		    }
 	    }
-
-	    return rr;
+	    return reciprocalRank;
 	}
 
-	private static List<String> getCandidatesForScenario(CorpusProcessor processor, int scenario, String currentQuery) {
+	/**
+	 * Fetches the related candidates for each scenario for the given query.
+	 * Scenario1: full-query candidates only
+	 * Scenario2: full-query + top 10 synthetic
+	 * Scenario3: full-query + top 100 synthetic
+	 *
+	 * @param processor a {@link CorpusProcessor} instance
+	 * @param scenario the scenario for which the candidates will be fetched
+	 * @param query the query prefix to be matched
+	 * @return a {@link List} of the fetched candidates
+	 */
+	private static List<String> getCandidatesForScenario(CorpusProcessor processor, int scenario, String query) {
 		List<String> mergedCandidates = new ArrayList<>();
-		mergedCandidates.addAll(processor.getFullQueryCandidates(currentQuery));  // full-query candidates are for all scenarios
+		mergedCandidates.addAll(processor.getFullQueryCandidates(query));  // full-query candidates are for all scenarios
 
 		List<String> syntheticQueryCandidates;
 
 		if (scenario == 2) {
-			// Full-query based candidates + Suffix based candidates (top 10k)
-			syntheticQueryCandidates = processor.getSyntheticQueryCandidates(currentQuery, 10000, 10);
+			// Full-query based candidates + Suffix based candidates (top 10)
+			syntheticQueryCandidates = processor.getSyntheticQueryCandidates(query, 10000, 10);
 			mergedCandidates.addAll(syntheticQueryCandidates);
 		} else if (scenario == 3){
-			// Full-query based candidates + Suffix based candidates (top 100k)
-			syntheticQueryCandidates = processor.getSyntheticQueryCandidates(currentQuery, 100000, 100);
+			// Full-query based candidates + Suffix based candidates (top 100)
+			syntheticQueryCandidates = processor.getSyntheticQueryCandidates(query, 100000, 100);
 			mergedCandidates.addAll(syntheticQueryCandidates);
 		}
 		return mergedCandidates;
 	}
 
-	private static void writeCandidatesInFile(BufferedWriter writer, String userInputQuery,
-			Map<String, Integer> aggregatedCandidates) throws IOException {
-
-		for (Map.Entry<String, Integer> candidate : aggregatedCandidates.entrySet()) {
-		    String candidateWithoutDelim = candidate.getKey().replace("|", "");
-		    Integer relevanceJudgement = (candidateWithoutDelim.equals(userInputQuery)) ? 1 : 0;
-
-			String line = candidate.getKey() + "\t" + relevanceJudgement.toString() + "\n";
-			writer.write(line);
-		}
-	}
-
+	/**
+	 * Aggregates the elements in the {@code mergedCandidates} list that
+	 * were found to be the same. The resulting {@link Map} contains a key
+	 * to count mapping for each unique candidate. Moreover, the map is
+	 * sort in descending order based on the resulting values.
+	 *
+	 * @param mergedCandidates the {@link List} of candidates to be aggregated
+	 * @return the resulting {@link Map} instance
+	 */
     private static Map<String, Integer> aggregateCandidates(List<String> mergedCandidates) {
         Map<String, Integer> m = new HashMap<>();
         for (String candidate : mergedCandidates) {
             Integer c = m.get(candidate);
-            if (c != null) {
-                m.put(candidate, ++c);
-            } else {
-                m.put(candidate, 1);
-            }
+	        m.put(candidate, c != null ? ++c : Integer.valueOf(1));
         }
 
         m = m.entrySet().stream()
@@ -169,4 +176,28 @@ public class Core {
 
         return m;
     }
+
+	/**
+	 * Writes the candidates for a specific query to a file. Apart
+	 * from the candidates, a relevance judgement (0 or 1) that
+	 * indicates whether the particular candidate matches the original
+	 * query is included.
+	 *
+	 * @param writer a {@link BufferedWriter} instance
+	 * @param query the original query
+	 * @param aggregatedCandidates a {@link Map} instance containing the
+	 * the count for each candidate
+	 * @throws IOException in case the file writing fails
+	 */
+	private static void writeCandidatesInFile(BufferedWriter writer, String query,
+			Map<String, Integer> aggregatedCandidates) throws IOException {
+
+		for (Map.Entry<String, Integer> candidate : aggregatedCandidates.entrySet()) {
+			String candidateWithoutDelim = candidate.getKey().replace("|", "");
+			Integer relevanceJudgement = (candidateWithoutDelim.equals(query)) ? 1 : 0;
+
+			String line = candidate.getKey() + "\t" + relevanceJudgement.toString() + "\n";
+			writer.write(line);
+		}
+	}
 }
